@@ -74,9 +74,10 @@ is `1970-01-01`, never the current day. `--platforms` is a comma-separated
 list (`web`, `mobile`, `desktop`, `backend`, `cli`) and defaults to `web`.
 
 `--dir` is the Spekkr folder to write. The default is `./<slug>` in the
-current directory. `<slug>` is the feature folder's name, lowercased, with a
-leading `NNN-` removed and any other character turned into a hyphen.
-`specs/003-pebble-jar` becomes `./pebble-jar`.
+current directory. `<slug>` is the name of the directory that path refers
+to, so `.` is the current directory and `..` is its parent. The name is
+lowercased, a leading `NNN-` is removed, and any other character becomes a
+hyphen. `specs/003-pebble-jar` becomes `./pebble-jar`.
 
 ```sh
 python3 spec_kit_codec.py to-spekkr specs/003-pebble-jar --dir ./pebble-jar \
@@ -102,8 +103,9 @@ and `publish_spec`.
 
 `to-speckit` refuses a Spekkr spec that already has a `plan.md`, and a
 `design.md` that already starts with `<!-- spekkr:safety:begin -->`.
-`to-spekkr` refuses a `design.md` that is not the codec's stub. Both stop
-with `error:` on stderr and write nothing.
+`to-spekkr` refuses a `design.md` that is not the codec's stub. A folder in
+the source that cannot be read stops the command as well. The command prints
+`error:` on stderr and writes nothing.
 
 ## Sidecar
 

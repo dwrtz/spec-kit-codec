@@ -308,6 +308,72 @@ def check_flags(codec_path: Path, codec, fixtures: Path, failures: list[str]) ->
     if not codec.SAFETY_BLOCK.endswith(b"\n\n"):
         failures.append("flags: safety block does not end with a blank line")
 
+    check_relative_source(codec_path, numbered, failures)
+    check_unreadable_source(codec_path, basic, failures)
+
+
+def check_relative_source(codec_path: Path, numbered: Path, failures: list[str]) -> None:
+    """`.` and `..` name the directory they refer to, not the path text."""
+    flags = ["--author", "example-user", "--date", "2026-01-01"]
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        source = place(numbered, tmp_path / "placed")
+        dot = run(
+            codec_path,
+            ["to-spekkr", ".", "--dir", "../from-dot", *flags],
+            cwd=source,
+        )
+        if not ok(dot, "flags", "to-spekkr .", failures):
+            return
+        differ(numbered / "expected-spekkr", source.parent / "from-dot", "flags: slug from .", failures)
+
+        # `..` is the feature folder, and this empty child is part of that
+        # tree, so only the derived id is compared with the golden manifest.
+        inside = source / "inside"
+        inside.mkdir()
+        parent = run(
+            codec_path,
+            ["to-spekkr", "..", "--dir", "../../from-parent", *flags],
+            cwd=inside,
+        )
+        if not ok(parent, "flags", "to-spekkr ..", failures):
+            return
+        written = source.parent / "from-parent" / "spekkr.json"
+        if not written.is_file():
+            failures.append("flags: to-spekkr .. did not write spekkr.json")
+        else:
+            spec_id = json.loads(written.read_text(encoding="utf-8"))["id"]
+            if spec_id != "example-user/example":
+                failures.append(f"flags: slug from .. is {spec_id!r}")
+
+
+def check_unreadable_source(codec_path: Path, basic: Path, failures: list[str]) -> None:
+    """An unreadable subdirectory aborts the conversion and writes nothing."""
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        return
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        source = tmp_path / "spec"
+        shutil.copytree(basic, source)
+        hidden = source / "reference"
+        hidden.mkdir()
+        (hidden / "note.md").write_text("hidden\n", encoding="utf-8")
+        hidden.chmod(0)
+        out = tmp_path / "out"
+        try:
+            proc = run(codec_path, ["to-speckit", str(source), "--dir", str(out)])
+        finally:
+            hidden.chmod(0o755)
+    if proc.returncode == 0:
+        failures.append("flags: an unreadable directory was converted")
+        return
+    if not proc.stderr.startswith("error: cannot read "):
+        failures.append(f"flags: unreadable directory stderr was {proc.stderr!r}")
+    if proc.stdout:
+        failures.append(f"flags: an unreadable directory wrote to stdout: {proc.stdout!r}")
+    if out.exists():
+        failures.append("flags: an unreadable directory left an output folder")
+
 
 def cases(root: Path) -> list[Path]:
     return sorted(path for path in root.iterdir() if path.is_dir())

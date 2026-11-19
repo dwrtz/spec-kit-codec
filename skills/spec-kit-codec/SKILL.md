@@ -79,9 +79,10 @@ written to both `author.id` and `author.name`.
 `--date` is the changelog date (`2026-01-01`). With no `--date` the date is
 `1970-01-01`, never today. `--platforms` is a comma-separated list and
 defaults to `web`. `--dir` is the Spekkr folder to write; the default is
-`./<slug>` in the current directory. `<slug>` is the feature folder's name,
-lowercased, with a leading `NNN-` removed and any other character turned into
-a hyphen. When a `spekkr.json` is already in the feature folder, that file is
+`./<slug>` in the current directory. `<slug>` is the name of the directory
+the path refers to, so `.` is the current directory. It is lowercased, a
+leading `NNN-` is removed, and any other character is turned into a hyphen.
+When a `spekkr.json` is already in the feature folder, that file is
 copied unchanged and the flags are not used to rebuild it.
 
 The script drops `design.md` only when it is the codec's own stub. Any other

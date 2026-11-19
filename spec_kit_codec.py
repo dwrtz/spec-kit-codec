@@ -17,8 +17,10 @@ sits outside the feature folder and is not part of the round trip.
 to-spekkr writes a Spekkr folder. With a spekkr.json already in the feature
 folder, that file is copied unchanged. Without one, the manifest is filled
 in from the feature folder and the flags. --author is required in that case.
---date defaults to 1970-01-01, never the current day. --platforms defaults
-to web.
+The slug is the name of the directory the source path refers to, so `.` and
+`..` use that directory's name. --date defaults to 1970-01-01, never the
+current day. --platforms defaults to web. A source tree that cannot be read
+stops the command before anything is written.
 
 The script prints the folder it wrote. Notes about a filled-in manifest go
 to stderr. A problem is one line on stderr, starting with "error:", and a
@@ -203,7 +205,7 @@ def to_spekkr(
         if dest is None:
             slug = manifest_id(files["spekkr.json"]).split("/", 1)[1]
     else:
-        slug = slug_from(source.name)
+        slug = slug_from(directory_name(source))
         filled, notes = fill_manifest(files, slug, author, date, platforms)
         files["spekkr.json"] = filled
         for line in notes:
@@ -524,6 +526,17 @@ def require_dir(path: Path) -> Path:
     return path
 
 
+def directory_name(path: Path) -> str:
+    """The directory's own name. `.` and `..` resolve before the name is taken."""
+    try:
+        name = path.resolve().name
+    except OSError as error:
+        raise CodecError(f"cannot read {path}: {error.strerror}") from error
+    if not name:
+        raise CodecError(f"folder name {str(path)!r} does not make a Spekkr id")
+    return name
+
+
 def separate(source: Path, dest: Path) -> None:
     source_abs = source.resolve()
     dest_abs = dest.resolve()
@@ -537,7 +550,16 @@ def separate(source: Path, dest: Path) -> None:
 def read_tree(root: Path) -> tuple[dict[str, bytes], set[str]]:
     files: dict[str, bytes] = {}
     directories: set[str] = set()
-    for dirpath, dirnames, filenames in os.walk(root):
+
+    def unreadable(error: OSError) -> None:
+        # os.walk skips a directory it cannot list unless this raises. A
+        # conversion that omitted that directory would still exit 0.
+        name = error.filename if error.filename else root
+        if isinstance(name, bytes):
+            name = os.fsdecode(name)
+        raise CodecError(f"cannot read {name}: {error.strerror}") from error
+
+    for dirpath, dirnames, filenames in os.walk(root, onerror=unreadable):
         current = Path(dirpath)
         dirnames.sort()
         for name in dirnames:
@@ -553,7 +575,10 @@ def read_tree(root: Path) -> tuple[dict[str, bytes], set[str]]:
             if not path.is_file():
                 raise CodecError(f"not a regular file: {path}")
             rel = path.relative_to(root).as_posix()
-            files[rel] = path.read_bytes()
+            try:
+                files[rel] = path.read_bytes()
+            except OSError as error:
+                raise CodecError(f"cannot read {path}: {error.strerror}") from error
     return files, directories
 
 
