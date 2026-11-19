@@ -1,0 +1,34 @@
+{
+  "spekkr": 1,
+  "id": "example-user/collision-plan",
+  "name": "Collision plan",
+  "summary": "A synthetic spec that already contains plan.md.",
+  "version": "0.1.0",
+  "author": {
+    "id": "example-user",
+    "name": "Example User"
+  },
+  "targets": {
+    "platforms": [
+      "web"
+    ]
+  },
+  "files": [
+    {
+      "path": "spec.md"
+    },
+    {
+      "path": "design.md"
+    },
+    {
+      "path": "plan.md"
+    }
+  ],
+  "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2026-01-15",
+      "note": "Synthetic fixture."
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "spekkr": 1,
+  "id": "example-user/long-summary",
+  "name": "Long jar",
+  "summary": "pebble pebble pebble pebble pebble pebble pebble pebble pebble pebble pebble pebble pebble pebble pebble pebble pebble pebble pebble pebble",
+  "version": "0.1.0",
+  "author": {
+    "id": "example-user",
+    "name": "example-user"
+  },
+  "targets": {
+    "platforms": [
+      "web"
+    ]
+  },
+  "customize": {},
+  "files": [
+    {
+      "path": "spec.md"
+    },
+    {
+      "path": "design.md"
+    },
+    {
+      "path": "tasks.md"
+    }
+  ],
+  "needs": {},
+  "demo": {},
+  "safety": {},
+  "lineage": {},
+  "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2026-01-01",
+      "note": "Converted from Spec Kit."
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+error: design.md is not the Spec Kit codec's stub; to-spekkr will not drop it

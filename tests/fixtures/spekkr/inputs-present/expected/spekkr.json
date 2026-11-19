@@ -1,0 +1,43 @@
+{
+  "spekkr": 1,
+  "id": "example-user/inputs-present",
+  "name": "Inputs present",
+  "summary": "A synthetic spec whose inputs file is in the folder.",
+  "version": "0.1.0",
+  "author": {
+    "id": "example-user",
+    "name": "Example User"
+  },
+  "targets": {
+    "platforms": [
+      "web"
+    ]
+  },
+  "files": [
+    {
+      "path": "spec.md"
+    },
+    {
+      "path": "design.md"
+    },
+    {
+      "path": "tasks.md"
+    }
+  ],
+  "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2026-01-15",
+      "note": "Synthetic fixture."
+    }
+  ],
+  "customize": {
+    "settings": [
+      {
+        "key": "jar_name",
+        "label": "Jar name",
+        "default": "Blue"
+      }
+    ]
+  }
+}

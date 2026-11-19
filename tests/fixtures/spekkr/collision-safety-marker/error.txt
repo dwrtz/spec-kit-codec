@@ -1,0 +1,1 @@
+error: design.md already starts with <!-- spekkr:safety:begin -->; to-speckit will not add the safety block again
