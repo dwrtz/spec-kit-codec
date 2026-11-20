@@ -27,7 +27,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 HERE = Path(__file__).resolve().parent
 
@@ -57,23 +57,64 @@ def extract_fixtures_archive(archive: Path, stack: contextlib.ExitStack) -> Path
     tmp = Path(stack.enter_context(tempfile.TemporaryDirectory(prefix="spekkr-fixtures-")))
     try:
         with tarfile.open(archive, "r:gz") as tf:
-            members = tf.getmembers()
-            for member in members:
-                if not (member.isfile() or member.isdir()):
-                    raise SystemExit(f"unsafe entry in {archive}: {member.name}")
-                parts = Path(member.name).parts
-                if not parts or parts[0] in ("/", "\\") or ".." in parts:
-                    raise SystemExit(f"unsafe path in {archive}: {member.name}")
-            if hasattr(tarfile, "data_filter"):
-                tf.extractall(tmp, filter="data")
-            else:
-                tf.extractall(tmp)
+            for member in tf.getmembers():
+                extract_member(tf, member, tmp, archive)
     except (tarfile.TarError, OSError) as exc:
         raise SystemExit(f"cannot unpack {archive}: {exc}") from exc
     fixtures = tmp / "fixtures"
     if not fixtures.is_dir():
         raise SystemExit(f"fixtures/ not found inside {archive}")
     return fixtures
+
+
+def extract_member(
+    tf: tarfile.TarFile,
+    member: tarfile.TarInfo,
+    root: Path,
+    archive: Path,
+) -> None:
+    """Write one regular file or directory, and nothing that escapes root."""
+    if not (member.isfile() or member.isdir()):
+        raise SystemExit(f"unsafe entry in {archive}: {member.name}")
+    dest = member_destination(root, member.name, archive)
+    if member.isdir():
+        dest.mkdir(parents=True, exist_ok=True)
+        return
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    source = tf.extractfile(member)
+    if source is None:
+        raise SystemExit(f"unsafe entry in {archive}: {member.name}")
+    with source, dest.open("wb") as out:
+        shutil.copyfileobj(source, out)
+
+
+def member_destination(root: Path, name: str, archive: Path) -> Path:
+    """The path under root where this archive member may be written."""
+    if not relative_archive_name(name):
+        raise SystemExit(f"unsafe path in {archive}: {name}")
+    candidate = root.joinpath(*PurePosixPath(name).parts)
+    root_resolved = root.resolve()
+    resolved = candidate.resolve()
+    if resolved != root_resolved and root_resolved not in resolved.parents:
+        raise SystemExit(f"unsafe path in {archive}: {name}")
+    return resolved
+
+
+def relative_archive_name(name: str) -> bool:
+    """True when name is a relative tar path on both POSIX and Windows.
+
+    POSIX Path keeps the anchor of ``//tmp/outside.txt`` as ``//``, so a check
+    for ``/`` alone lets that member through. ``extractall`` then writes it
+    outside the destination. Drive letters and UNC prefixes are absolute on
+    Windows even when a POSIX path calls them relative.
+    """
+    if not name or "\x00" in name:
+        return False
+    for parser in (PurePosixPath, PureWindowsPath):
+        parsed = parser(name)
+        if parsed.is_absolute() or parsed.drive or ".." in parsed.parts or not parsed.parts:
+            return False
+    return True
 
 
 def locate(stack: contextlib.ExitStack) -> tuple[Path, Path, bool]:
