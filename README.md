@@ -9,7 +9,8 @@ Kit 1.4 can plan, task, and implement. `to-spekkr` writes a Spekkr folder
 again. A folder that already has `spekkr.json` comes back byte for byte.
 Requirement ids, "Accept when" lines, and the task text stay as written.
 
-The Spekkr spec for this codec is `dwrtz/spec-kit-codec` on spekkr.com.
+The Spekkr spec for this codec is
+[`dwrtz/spec-kit-codec`](https://spekkr.com/dwrtz/spec-kit-codec/).
 
 ## Install
 
@@ -181,9 +182,12 @@ Point the agent at that file, or leave `skills/spec-kit-codec/` on the skill
 path the agent already loads. The skill says to keep requirement ids and task
 text as written.
 
-An agent that pulled `dwrtz/spec-kit-codec` from Spekkr gets the same skill at
-`reference/SKILL.md`, the script at `reference/spec_kit_codec.py`, and the
-fixtures at `reference/fixtures/`.
+An agent that pulled
+[`dwrtz/spec-kit-codec`](https://spekkr.com/dwrtz/spec-kit-codec/) from Spekkr
+gets the same skill at `reference/SKILL.md` and the script at
+`reference/spec_kit_codec.py`. The golden fixtures are
+`reference/fixtures.tar.gz`. That archive unpacks to `reference/fixtures/`
+(`tar -xzf reference/fixtures.tar.gz -C reference`).
 
 ## Verify
 
@@ -221,8 +225,10 @@ as the bytes quoted above. The checker compares both directions with
 this one on the fixtures.
 
 A copy of the checker that lives in a directory named `reference`, next to
-`spec_kit_codec.py` and `fixtures/`, checks that copy. That is the layout
-inside the pulled spec:
+`spec_kit_codec.py` and `fixtures.tar.gz`, checks that copy. That is the
+layout inside the pulled spec. When `reference/fixtures/` is already there,
+the checker reads it directly. When only the archive is present, it unpacks
+`fixtures.tar.gz` into a temporary directory and runs the same suite:
 
 ```sh
 python3 reference/check.py

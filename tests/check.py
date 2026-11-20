@@ -11,18 +11,21 @@ commands as spec_kit_codec.py, and the module has to define SAFETY_BLOCK
 and DESIGN_STUB.
 
 A copy that sits in a directory named reference, next to spec_kit_codec.py
-and fixtures/, checks that copy. That is the layout of the Spekkr spec
-dwrtz/spec-kit-codec.
+and fixtures/ or fixtures.tar.gz, checks that copy. That is the layout of
+https://spekkr.com/dwrtz/spec-kit-codec/. With no fixtures/ directory, the
+checker unpacks fixtures.tar.gz into a temporary directory.
 """
 
 from __future__ import annotations
 
+import contextlib
 import importlib.util
 import json
 import os
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 from pathlib import Path
 
@@ -30,25 +33,50 @@ HERE = Path(__file__).resolve().parent
 
 
 def main() -> int:
-    codec_path, fixtures, custom = locate()
-    codec = load_codec(codec_path)
-    failures: list[str] = []
-    check_spekkr(codec_path, codec, fixtures / "spekkr", failures)
-    check_handwritten(codec_path, codec, fixtures / "handwritten", failures)
-    check_flags(codec_path, codec, fixtures, failures)
-    if not custom and HERE.name != "reference":
-        check_documented_bytes(codec, failures)
-    if failures:
-        print(f"{len(failures)} Spec Kit codec check(s) failed:", file=sys.stderr)
-        for failure in failures:
-            print(f"  {failure}", file=sys.stderr)
-        return 1
-    where = "reference fixtures" if HERE.name == "reference" else "tests/fixtures"
-    print(f"Spec Kit codec checks passed ({where}).")
-    return 0
+    with contextlib.ExitStack() as stack:
+        codec_path, fixtures, custom = locate(stack)
+        codec = load_codec(codec_path)
+        failures: list[str] = []
+        check_spekkr(codec_path, codec, fixtures / "spekkr", failures)
+        check_handwritten(codec_path, codec, fixtures / "handwritten", failures)
+        check_flags(codec_path, codec, fixtures, failures)
+        if not custom and HERE.name != "reference":
+            check_documented_bytes(codec, failures)
+        if failures:
+            print(f"{len(failures)} Spec Kit codec check(s) failed:", file=sys.stderr)
+            for failure in failures:
+                print(f"  {failure}", file=sys.stderr)
+            return 1
+        where = "reference fixtures" if HERE.name == "reference" else "tests/fixtures"
+        print(f"Spec Kit codec checks passed ({where}).")
+        return 0
 
 
-def locate() -> tuple[Path, Path, bool]:
+def extract_fixtures_archive(archive: Path, stack: contextlib.ExitStack) -> Path:
+    """Unpack fixtures.tar.gz into a temporary directory and return fixtures/."""
+    tmp = Path(stack.enter_context(tempfile.TemporaryDirectory(prefix="spekkr-fixtures-")))
+    try:
+        with tarfile.open(archive, "r:gz") as tf:
+            members = tf.getmembers()
+            for member in members:
+                if not (member.isfile() or member.isdir()):
+                    raise SystemExit(f"unsafe entry in {archive}: {member.name}")
+                parts = Path(member.name).parts
+                if not parts or parts[0] in ("/", "\\") or ".." in parts:
+                    raise SystemExit(f"unsafe path in {archive}: {member.name}")
+            if hasattr(tarfile, "data_filter"):
+                tf.extractall(tmp, filter="data")
+            else:
+                tf.extractall(tmp)
+    except (tarfile.TarError, OSError) as exc:
+        raise SystemExit(f"cannot unpack {archive}: {exc}") from exc
+    fixtures = tmp / "fixtures"
+    if not fixtures.is_dir():
+        raise SystemExit(f"fixtures/ not found inside {archive}")
+    return fixtures
+
+
+def locate(stack: contextlib.ExitStack) -> tuple[Path, Path, bool]:
     """The codec, the fixtures, and whether the caller named another codec."""
     if len(sys.argv) > 2:
         raise SystemExit("usage: python3 tests/check.py [CODEC.py]")
@@ -68,7 +96,11 @@ def locate() -> tuple[Path, Path, bool]:
     if not codec.is_file():
         raise SystemExit(f"codec not found: {codec}")
     if not fixtures.is_dir():
-        raise SystemExit(f"fixtures not found: {fixtures}")
+        archive = HERE / "fixtures.tar.gz"
+        if archive.is_file():
+            fixtures = extract_fixtures_archive(archive, stack)
+        else:
+            raise SystemExit(f"fixtures not found: {fixtures}")
     return codec, fixtures, custom
 
 

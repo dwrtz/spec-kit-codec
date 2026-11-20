@@ -14,8 +14,10 @@ The converter runs on the person's machine. The script is one Python 3.11+
 file and uses only the standard library.
 
 In this repository the script is `spec_kit_codec.py`. An agent that pulled
-the Spekkr spec `dwrtz/spec-kit-codec` has the same file at
-`reference/spec_kit_codec.py`. Run it with `python3` and the path you have.
+the Spekkr spec
+[`dwrtz/spec-kit-codec`](https://spekkr.com/dwrtz/spec-kit-codec/) has the
+same file at `reference/spec_kit_codec.py`. Run it with `python3` and the
+path you have.
 
 ## Pull a Spekkr spec into Spec Kit
 
@@ -97,9 +99,13 @@ goes through Spekkr's `check_spec` and `publish_spec`.
 
 ## Check a codec
 
-Golden fixtures live at `tests/fixtures/` in this repository and at
-`reference/fixtures/` in the pulled spec. They are synthetic. The checker is
-`tests/check.py` here and `reference/check.py` in the spec:
+Golden fixtures live at `tests/fixtures/` in this repository. In the pulled
+spec they are `reference/fixtures.tar.gz`, which unpacks to
+`reference/fixtures/`. They are synthetic. The checker is `tests/check.py`
+here and `reference/check.py` in the spec. It reads a `fixtures/`
+directory next to itself when that directory is present, and unpacks
+`fixtures.tar.gz` next to itself into a temporary directory when the
+directory is absent:
 
 ```sh
 python3 tests/check.py
