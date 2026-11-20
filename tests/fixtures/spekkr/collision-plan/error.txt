@@ -1,0 +1,1 @@
+error: this Spekkr spec already has plan.md; to-speckit will not overwrite it

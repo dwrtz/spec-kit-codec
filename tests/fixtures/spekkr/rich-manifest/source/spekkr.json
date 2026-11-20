@@ -1,0 +1,113 @@
+{
+  "spekkr": 1,
+  "id": "example-user/rich-manifest",
+  "name": "Lantern hours",
+  "summary": "A synthetic spec that fills the manifest fields a codec must copy.",
+  "keywords": [
+    "lantern",
+    "hours"
+  ],
+  "kind": "toy",
+  "version": "0.2.0",
+  "author": {
+    "id": "example-user",
+    "name": "Example User",
+    "url": "https://example.test/lantern"
+  },
+  "license": "Make your own lantern.",
+  "targets": {
+    "platforms": [
+      "web",
+      "cli"
+    ],
+    "stack": [
+      "Python"
+    ]
+  },
+  "customize": {
+    "settings": [
+      {
+        "key": "wick",
+        "label": "Wick",
+        "default": "cotton",
+        "help": "What burns."
+      }
+    ],
+    "options": [
+      {
+        "key": "glass",
+        "label": "Glass chimney",
+        "default": false
+      }
+    ],
+    "swaps": [
+      {
+        "key": "fuel",
+        "label": "Fuel",
+        "choices": [
+          "oil",
+          "wax"
+        ],
+        "default": "wax"
+      }
+    ]
+  },
+  "files": [
+    {
+      "path": "spec.md",
+      "about": "Requirements."
+    },
+    {
+      "path": "design.md"
+    },
+    {
+      "path": "tasks.md"
+    },
+    {
+      "path": "shots/dot.png",
+      "about": "A one-pixel picture."
+    }
+  ],
+  "needs": {
+    "accounts": [
+      "A wick supplier"
+    ],
+    "permissions": [
+      "shell"
+    ]
+  },
+  "demo": {
+    "url": "https://lantern.example/hours",
+    "screenshots": [
+      "shots/dot.png"
+    ]
+  },
+  "safety": {
+    "commands": [
+      "python3 lantern.py"
+    ],
+    "secrets": [
+      "LANTERN_TOKEN"
+    ],
+    "scan": "passed",
+    "scannedOn": "2026-03-01"
+  },
+  "lineage": {
+    "forkedFrom": "example-user/old-lantern",
+    "adapters": [
+      "example-user/gas-lantern"
+    ]
+  },
+  "changelog": [
+    {
+      "version": "0.2.0",
+      "date": "2026-03-02",
+      "note": "Adds a glass option."
+    },
+    {
+      "version": "0.1.0",
+      "date": "2026-01-15",
+      "note": "First synthetic version."
+    }
+  ]
+}

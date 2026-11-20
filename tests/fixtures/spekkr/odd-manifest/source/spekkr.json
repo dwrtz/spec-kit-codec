@@ -1,0 +1,17 @@
+{
+    "spekkr" : 1,
+    "changelog" : [
+        { "version" : "0.1.0", "date" : "2026-04-01", "note" : "Odd spacing." }
+    ],
+    "author" : { "name" : "Example User", "id" : "example-user" },
+    "id" : "example-user/odd-manifest",
+    "name" : "Odd manifest",
+    "summary" : "Unusual spacing, key order and a café.",
+    "version" : "0.1.0",
+    "targets" : { "platforms" : [ "web" ] },
+    "files" : [
+        { "path" : "spec.md" },
+        { "path" : "design.md" },
+        { "path" : "tasks.md" }
+    ]
+}

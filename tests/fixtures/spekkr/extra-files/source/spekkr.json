@@ -1,0 +1,43 @@
+{
+  "spekkr": 1,
+  "id": "example-user/extra-files",
+  "name": "Extra files",
+  "summary": "A synthetic spec with nested reference files and a picture.",
+  "version": "0.1.0",
+  "author": {
+    "id": "example-user",
+    "name": "Example User"
+  },
+  "targets": {
+    "platforms": [
+      "web"
+    ]
+  },
+  "files": [
+    {
+      "path": "spec.md"
+    },
+    {
+      "path": "design.md"
+    },
+    {
+      "path": "tasks.md"
+    },
+    {
+      "path": "research.md"
+    },
+    {
+      "path": "reference/notes/deep.txt"
+    },
+    {
+      "path": "shots/pixel.png"
+    }
+  ],
+  "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2026-01-15",
+      "note": "Synthetic fixture."
+    }
+  ]
+}

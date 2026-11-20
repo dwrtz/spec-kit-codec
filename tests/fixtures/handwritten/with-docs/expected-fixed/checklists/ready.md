@@ -1,0 +1,3 @@
+# Checklist
+
+- [ ] The count shows.

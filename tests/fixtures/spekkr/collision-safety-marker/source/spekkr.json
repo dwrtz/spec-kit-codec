@@ -1,0 +1,31 @@
+{
+  "spekkr": 1,
+  "id": "example-user/collision-safety-marker",
+  "name": "Collision marker",
+  "summary": "A synthetic spec whose design starts with the safety marker.",
+  "version": "0.1.0",
+  "author": {
+    "id": "example-user",
+    "name": "Example User"
+  },
+  "targets": {
+    "platforms": [
+      "web"
+    ]
+  },
+  "files": [
+    {
+      "path": "spec.md"
+    },
+    {
+      "path": "design.md"
+    }
+  ],
+  "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2026-01-15",
+      "note": "Synthetic fixture."
+    }
+  ]
+}

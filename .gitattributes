@@ -1,0 +1,3 @@
+# Fixture bytes are the test. Git must not rewrite CRLF or a missing
+# trailing newline.
+tests/fixtures/** -text
