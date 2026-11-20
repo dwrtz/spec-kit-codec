@@ -11,44 +11,113 @@ commands as spec_kit_codec.py, and the module has to define SAFETY_BLOCK
 and DESIGN_STUB.
 
 A copy that sits in a directory named reference, next to spec_kit_codec.py
-and fixtures/, checks that copy. That is the layout of the Spekkr spec
-dwrtz/spec-kit-codec.
+and fixtures/ or fixtures.tar.gz, checks that copy. That is the layout of
+https://spekkr.com/dwrtz/spec-kit-codec/. With no fixtures/ directory, the
+checker unpacks fixtures.tar.gz into a temporary directory.
 """
 
 from __future__ import annotations
 
+import contextlib
 import importlib.util
 import json
 import os
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 HERE = Path(__file__).resolve().parent
 
 
 def main() -> int:
-    codec_path, fixtures, custom = locate()
-    codec = load_codec(codec_path)
-    failures: list[str] = []
-    check_spekkr(codec_path, codec, fixtures / "spekkr", failures)
-    check_handwritten(codec_path, codec, fixtures / "handwritten", failures)
-    check_flags(codec_path, codec, fixtures, failures)
-    if not custom and HERE.name != "reference":
-        check_documented_bytes(codec, failures)
-    if failures:
-        print(f"{len(failures)} Spec Kit codec check(s) failed:", file=sys.stderr)
-        for failure in failures:
-            print(f"  {failure}", file=sys.stderr)
-        return 1
-    where = "reference fixtures" if HERE.name == "reference" else "tests/fixtures"
-    print(f"Spec Kit codec checks passed ({where}).")
-    return 0
+    with contextlib.ExitStack() as stack:
+        codec_path, fixtures, custom = locate(stack)
+        codec = load_codec(codec_path)
+        failures: list[str] = []
+        check_spekkr(codec_path, codec, fixtures / "spekkr", failures)
+        check_handwritten(codec_path, codec, fixtures / "handwritten", failures)
+        check_flags(codec_path, codec, fixtures, failures)
+        if not custom and HERE.name != "reference":
+            check_documented_bytes(codec, failures)
+        if failures:
+            print(f"{len(failures)} Spec Kit codec check(s) failed:", file=sys.stderr)
+            for failure in failures:
+                print(f"  {failure}", file=sys.stderr)
+            return 1
+        where = "reference fixtures" if HERE.name == "reference" else "tests/fixtures"
+        print(f"Spec Kit codec checks passed ({where}).")
+        return 0
 
 
-def locate() -> tuple[Path, Path, bool]:
+def extract_fixtures_archive(archive: Path, stack: contextlib.ExitStack) -> Path:
+    """Unpack fixtures.tar.gz into a temporary directory and return fixtures/."""
+    tmp = Path(stack.enter_context(tempfile.TemporaryDirectory(prefix="spekkr-fixtures-")))
+    try:
+        with tarfile.open(archive, "r:gz") as tf:
+            for member in tf.getmembers():
+                extract_member(tf, member, tmp, archive)
+    except (tarfile.TarError, OSError) as exc:
+        raise SystemExit(f"cannot unpack {archive}: {exc}") from exc
+    fixtures = tmp / "fixtures"
+    if not fixtures.is_dir():
+        raise SystemExit(f"fixtures/ not found inside {archive}")
+    return fixtures
+
+
+def extract_member(
+    tf: tarfile.TarFile,
+    member: tarfile.TarInfo,
+    root: Path,
+    archive: Path,
+) -> None:
+    """Write one regular file or directory, and nothing that escapes root."""
+    if not (member.isfile() or member.isdir()):
+        raise SystemExit(f"unsafe entry in {archive}: {member.name}")
+    dest = member_destination(root, member.name, archive)
+    if member.isdir():
+        dest.mkdir(parents=True, exist_ok=True)
+        return
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    source = tf.extractfile(member)
+    if source is None:
+        raise SystemExit(f"unsafe entry in {archive}: {member.name}")
+    with source, dest.open("wb") as out:
+        shutil.copyfileobj(source, out)
+
+
+def member_destination(root: Path, name: str, archive: Path) -> Path:
+    """The path under root where this archive member may be written."""
+    if not relative_archive_name(name):
+        raise SystemExit(f"unsafe path in {archive}: {name}")
+    candidate = root.joinpath(*PurePosixPath(name).parts)
+    root_resolved = root.resolve()
+    resolved = candidate.resolve()
+    if resolved != root_resolved and root_resolved not in resolved.parents:
+        raise SystemExit(f"unsafe path in {archive}: {name}")
+    return resolved
+
+
+def relative_archive_name(name: str) -> bool:
+    """True when name is a relative tar path on both POSIX and Windows.
+
+    POSIX Path keeps the anchor of ``//tmp/outside.txt`` as ``//``, so a check
+    for ``/`` alone lets that member through. ``extractall`` then writes it
+    outside the destination. Drive letters and UNC prefixes are absolute on
+    Windows even when a POSIX path calls them relative.
+    """
+    if not name or "\x00" in name:
+        return False
+    for parser in (PurePosixPath, PureWindowsPath):
+        parsed = parser(name)
+        if parsed.is_absolute() or parsed.drive or ".." in parsed.parts or not parsed.parts:
+            return False
+    return True
+
+
+def locate(stack: contextlib.ExitStack) -> tuple[Path, Path, bool]:
     """The codec, the fixtures, and whether the caller named another codec."""
     if len(sys.argv) > 2:
         raise SystemExit("usage: python3 tests/check.py [CODEC.py]")
@@ -68,7 +137,11 @@ def locate() -> tuple[Path, Path, bool]:
     if not codec.is_file():
         raise SystemExit(f"codec not found: {codec}")
     if not fixtures.is_dir():
-        raise SystemExit(f"fixtures not found: {fixtures}")
+        archive = HERE / "fixtures.tar.gz"
+        if archive.is_file():
+            fixtures = extract_fixtures_archive(archive, stack)
+        else:
+            raise SystemExit(f"fixtures not found: {fixtures}")
     return codec, fixtures, custom
 
 
