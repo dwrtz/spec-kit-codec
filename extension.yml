@@ -1,0 +1,35 @@
+schema_version: "1.0"
+
+extension:
+  id: "spekkr"
+  name: "Spekkr Codec"
+  version: "0.1.0"
+  description: "Move work between a Spekkr spec folder and a Spec Kit feature folder with no loss, in both directions. One standard-library Python script."
+  author: "dwrtz"
+  repository: "https://github.com/dwrtz/spec-kit-codec"
+  license: "MIT"
+  homepage: "https://spekkr.com/guides/spec-portability/"
+  category: "integration"
+  effect: "read-write"
+
+requires:
+  speckit_version: ">=1.4.2"
+  tools:
+    - name: "python3"
+      version: ">=3.11"
+      required: true
+
+provides:
+  commands:
+    - name: "speckit.spekkr.import"
+      file: "commands/import.md"
+      description: "Pull a Spekkr spec folder into this project as a Spec Kit feature folder"
+    - name: "speckit.spekkr.export"
+      file: "commands/export.md"
+      description: "Turn a Spec Kit feature folder into a Spekkr spec folder"
+
+tags:
+  - "spekkr"
+  - "interop"
+  - "converter"
+  - "portability"
