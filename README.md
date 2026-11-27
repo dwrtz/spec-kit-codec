@@ -1,5 +1,7 @@
 # spec-kit-codec
 
+[![Built from a Spekkr spec](https://img.shields.io/badge/built%20from-Spekkr%20spec-f0442b)](https://spekkr.com/dwrtz/spec-kit-codec/)
+
 Lossless converter between a [Spekkr](https://spekkr.com) spec folder and a
 [GitHub Spec Kit](https://github.com/github/spec-kit) feature folder. One
 Python 3.11+ script, standard library only, plus an agent skill.
