@@ -1,0 +1,6 @@
+# Development files that are not needed in an installed copy.
+.github/
+tests/
+Makefile
+skills/
+.git/
