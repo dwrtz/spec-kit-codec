@@ -4,7 +4,8 @@
 
 Lossless converter between a [Spekkr](https://spekkr.com) spec folder and a
 [GitHub Spec Kit](https://github.com/github/spec-kit) feature folder. One
-Python 3.11+ script, standard library only, plus an agent skill.
+Python 3.11+ script, standard library only. It comes as a Spec Kit extension
+and as an agent skill.
 
 The same work lives in two layouts. `to-speckit` writes a feature folder Spec
 Kit 1.4 can plan, task, and implement. `to-spekkr` writes a Spekkr folder
@@ -14,7 +15,40 @@ Requirement ids, "Accept when" lines, and the task text stay as written.
 The Spekkr spec for this codec is
 [`dwrtz/spec-kit-codec`](https://spekkr.com/dwrtz/spec-kit-codec/).
 
-## Install
+## Install as a Spec Kit extension
+
+Needs Spec Kit 1.4.2 or newer and Python 3.11 or newer. From the root of a
+Spec Kit project (the directory that contains `.specify/`):
+
+```sh
+specify extension add spekkr --from https://github.com/dwrtz/spec-kit-codec/archive/refs/tags/v0.1.0.zip
+```
+
+This adds two commands. Spec Kit renders them for your coding agent, so the
+name depends on the agent: `/speckit-spekkr-import` and
+`/speckit-spekkr-export` for agents that use skills (Claude Code, Copilot in
+its skills layout), `/speckit.spekkr.import` and `/speckit.spekkr.export` for
+agents that use command files.
+
+| Command | What it does |
+| --- | --- |
+| `speckit.spekkr.import <SPEKKR_FOLDER> [--dir FEATURE_FOLDER]` | Runs `to-speckit --activate`. Writes the feature folder and points `.specify/feature.json` at it. Shows you the commands and secrets the spec declares under `safety`. Next step is `/speckit.plan`. |
+| `speckit.spekkr.export [FEATURE_FOLDER] [--dir SPEKKR_FOLDER] [--author USER]` | Runs `to-spekkr`. Writes a Spekkr folder, ready for `check_spec` and `publish_spec`. Asks for `--author` when the feature has no `spekkr.json`. |
+
+The commands run the script that the extension installs at
+`.specify/extensions/spekkr/spec_kit_codec.py`. They only read the folder you
+give them, and they never publish anything.
+
+To try a local copy of this repository:
+
+```sh
+specify extension add --dev /path/to/spec-kit-codec
+```
+
+For when to move a spec between the two tools, and what each side keeps, see
+[Spec portability](https://spekkr.com/guides/spec-portability/).
+
+## Use the script directly
 
 Python 3.11 or newer. There is nothing to install.
 
